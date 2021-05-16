@@ -17,6 +17,11 @@ source devel/setup.bash
 chmod +x ~/catkin_ws/src/sst/scripts/car_model.py
 ```
 
+## Run:
+```bash
+roslaunch sst car_simulation.launch
+```
+
 ## Control a car with keyboard:
 ```bash
 sudo apt-get install ros-noetic-teleop-twist-keyboard
