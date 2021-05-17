@@ -15,6 +15,9 @@ class SST:
 
         return self.car.get_new_state(x_prop, ipsylon, t)
 
+    def best_first_selection(self, X, V_active, delta_bn):
+        pass
+
 
 if __name__ == '__main__':
     sst = SST()
