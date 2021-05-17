@@ -14,7 +14,7 @@ catkin_make
 
 source devel/setup.bash
 
-chmod +x ~/catkin_ws/src/sst/scripts/car_model.py
+chmod +x ~/catkin_ws/src/sst/scripts/*.py
 ```
 
 ## Run:
