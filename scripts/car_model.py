@@ -16,6 +16,9 @@ class CarModel:
         self.max_steering_angle = math.pi / 3
         self.max_lin_vel = 5.0
         self.max_ang_vel_wheel = 5.0
+        self.max_theta = 2 * math.pi
+        self.max_x = 100
+        self.max_y = 100
 
         # rospy.Subscriber('/steering', Steering, self.call_steering, queue_size=1)
 
