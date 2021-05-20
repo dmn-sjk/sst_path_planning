@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <launch>
+<include file="$(find sst)/launch/map.launch" />
 	<node name="sst" pkg="sst" type="car_model.py" output="screen" />
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find sst)/rviz/rviz_config.rviz" />
 </launch>
