@@ -2,6 +2,9 @@
 
 import numpy as np
 from car_model import CarModel
+from visualization_msgs.msg import Marker
+from geometry_msgs.msg import Point
+import rospy as rp
 
 
 class S:
@@ -10,28 +13,33 @@ class S:
         self.state = state
 
 
-class SST:
+class G:
     def __init__(self):
+        self.V_active = []
+        self.V_inactive = []
+        self.E = []
+        self.trajectory = []
+
+
+class SST:
+    def __init__(self, N=1000, delta_bn=1, delta_s=1, T_prop=10):
         self.car = CarModel()
         # dobrać
-        self.detla_bn = 0.1
-        self.detla_s = 0.1
-        self.T_prop = 0.5
-        self.N = 1000
+        self.detla_bn = delta_bn
+        self.detla_s = delta_s
+        self.T_prop = T_prop
+        self.N = N
 
-        self.V_active = [[[0], [0], [0], [0]]]
-        self.V_inactive = []
-        self.V = [self.V_active, self.V_inactive]
+        self.G = G()
 
-        # E i trajectories mają zgodne indeksy
-        self.E = ['a', 'b', 'c']
-        self.trajectories = []
-        self.parents = [None, 0, 1]
+        self.G.V_active = [np.array([[0], [0], [0], [0]])]
+        self.G.V_inactive = []
 
-        self.S = [S([[0], [0], [0], [0]], [[0], [0], [0], [0]])]
+        self.G.E = []
 
-        # self.G = [self.V, self.E]
-        self.G = {}
+        self.S = [S([0, 0, 0, 0], [0, 0, 0, 0])]
+
+        self.search_pub = rp.Publisher('/search', Marker, queue_size=10)
 
     def euclidan_dist_norm(self, a, b):
         a_norm = self.normalize_state(a)
@@ -39,15 +47,21 @@ class SST:
         sum = 0
         for i in range(len(a)):
             sum += pow(a_norm[i] - b_norm[i], 2)
+        # print(a_norm)
         return np.sqrt(sum)
 
-    # TODO ew. dodać pętle
     def monte_carlo_prop(self, x_prop):
         t = np.random.uniform(0, self.T_prop)
         ipsylon = np.array([[np.random.uniform(-self.car.max_ang_vel_wheel, self.car.max_ang_vel_wheel)],
                             [np.random.uniform(-self.car.max_lin_vel, self.car.max_lin_vel)]])
 
-        return self.car.get_new_state(x_prop, ipsylon, t), [ipsylon, t]
+        x = [x_prop]
+        traj = [[ipsylon, t]]
+
+        for i in range(10):
+            x.append(self.car.get_new_state(x[-1], ipsylon, t/10))
+
+        return x, traj
 
     def sample_state(self):
 
@@ -67,35 +81,69 @@ class SST:
 
     def near(self, x_rand):
         near = []
-        for x in self.V_active:
+        for x in self.G.V_active:
+            x = np.array(x)
+            x = np.reshape(x, (-1, 1))
             if self.euclidan_dist_norm(x, x_rand) <= self.detla_bn:
                 near.append(x)
         return near
 
-    def nearest(self, x_rand):
-        nearest = self.V_active[-1]
+    def nearest(self, x_rand, var):
+        nearest = var[-1]
+        nearest = np.array(nearest)
+        nearest = np.reshape(nearest, (-1, 1))
 
-        for node in self.V_active:
+        for node in var:
+            node = np.array(node)
+            node = np.reshape(node, (-1, 1))
             if self.euclidan_dist_norm(nearest, x_rand) > self.euclidan_dist_norm(node, x_rand):
                 nearest = node
         return nearest
 
-    # TODO !!!!!!!!!!!!!!!
+    def nearest_s(self, x_rand, var):
+        nearest = var[-1].state
+        nearest = np.array(nearest)
+        nearest = np.reshape(nearest, (-1, 1))
+
+        for node in var:
+            node = np.array(node.state)
+            node = np.reshape(node, (-1, 1))
+            if self.euclidan_dist_norm(nearest, x_rand) > self.euclidan_dist_norm(node, x_rand):
+                nearest = node
+        return nearest
+
+        # nearest = self.G.V_active[-1]
+        # nearest = np.array(nearest)
+        # nearest = np.reshape(nearest, (-1, 1))
+        #
+        # for node in self.G.V_active:
+        #     node = np.array(node)
+        #     node = np.reshape(node, (-1, 1))
+        #     if self.euclidan_dist_norm(nearest, x_rand) > self.euclidan_dist_norm(node, x_rand):
+        #         nearest = node
+        # return nearest
+
     def cost(self, x):
-        curr = self.E.index(x)
         cost = 0
-        if not curr == 0:
-            curr = self.E.index(x)
-            while curr is not None:
-                cost += 1
-                curr = self.parents[curr]
-        return cost - 1
+        parent = x
+        if len(self.G.E) == 0:
+            return 0
+        else:
+            comp_main = parent == self.G.E[0][0]
+            while not comp_main.all():
+                comp_main = parent == self.G.E[0][0]
+                for i, e in enumerate(self.G.E):
+                    comp = e[-1] == parent
+                    if comp.all():
+                        parent = e[0]
+                        cost += 1
+        return cost
 
     def best_first_selection(self):
         x_rand = self.sample_state()
         x_near = self.near(x_rand)
         if len(x_near) == 0:
-            return self.nearest(x_rand)
+            return self.nearest(x_rand, self.G.V_active)
         else:
             best = x_near[0]
             for x in x_near:
@@ -104,64 +152,109 @@ class SST:
             return best
 
     # TODO (mapa potrzebna)
-    def collisision_free(self, traj):
-        pass
+    def collisision_free(self, traj, x_new, ips_t):
+        return True
 
-    # TODO s_new_rep ogarnąć
     def is_node_locally_the_best(self, x_new):
-        s_new = self.nearest(x_new)
-        if self.euclidan_dist_norm(s_new, x_new) > self.detla_s:
-            self.S.append(x_new)
-            s_new = x_new
-            s_new_rep = None
-        x_peer = s_new_rep
+        s_new = S()
+        s_new.state = self.nearest_s(x_new, self.S)
+        if self.euclidan_dist_norm(s_new.state, x_new) > self.detla_s:
+            s_new.state = x_new
+            s_new.rep = None
+            self.S.append(s_new)
+        x_peer = s_new.rep
 
         if x_peer is None or self.cost(x_new) < self.cost(x_peer):
             return True
         return False
 
-    # TODO
     def prune_dominated_nodes(self, x_new):
-        s_new = self.nearest(x_new)
-        # x_peer = s_new_rep
-        x_peer = 0
+        s_new = S()
+        s_new.state = self.nearest_s(x_new, self.S)
+        for s in self.S:
+            comp = s.state == s_new.state
+            if comp.all():
+                x_peer = s.rep
         if x_peer is not None:
-            self.V_active.remove(x_peer)
-            self.V_inactive.append(x_peer)
-        s_new_rep = x_new
-        while x_peer is not None and self.is_leaf(x_peer) and x_peer in self.V_inactive:
+            for i, act in enumerate(self.G.V_active):
+                print(act)
+                comp = x_peer == act
+                if comp.all():
+                    self.G.V_active.pop(i)
+            self.G.V_inactive.append(x_peer)
+        s_new.rep = x_new
+
+        while x_peer is not None and self.is_leaf(x_peer) and x_peer in self.G.V_inactive:
             x_parent = self.parent(x_peer)
-            self.E.remove(self.euclidan_dist_norm(x_parent, x_peer))
-            self.V_inactive.remove(x_peer)
+            for i, e in enumerate(self.G.E):
+                if e[0] == x_parent and e[-1] == x_peer:
+                    self.G.E.pop(i)
+                    self.G.trajectory.pop(i)
+            self.G.V_inactive.remove(x_peer)
             x_peer = x_parent
 
     def is_leaf(self, x_peer):
-        parents_list = list(self.V.keys())
-        if x_peer in parents_list:
-            return True
+        leaf_list = []
+        for e in self.G.E:
+            leaf_list.append(e[-1])
+        for leaf in leaf_list:
+            comp = x_peer == leaf
+            if comp.all():
+                return True
         return False
 
     def parent(self, x_peer):
-        key_list = list(self.V.keys())
-        position = list(self.V.values()).index(x_peer)
-        return key_list[position]
+        for e in self.G.E:
+            if e[-1] == x_peer:
+                return e[0]
 
     def sst_planning(self):
         for i in range(self.N):
             x_selected = self.best_first_selection()
-            x_new, ips_t = self.monte_carlo_prop(x_selected)
+            x, ips_t = self.monte_carlo_prop(x_selected)
+            x_new = x[-1]
             if self.collisision_free(x_selected, x_new, ips_t):
                 if self.is_node_locally_the_best(x_new):
-                    self.V_active.append(x_new)
-                    self.E[x_new] = x_selected
-                    self.trajectories.append(ips_t)
-                    self.prune_dominated_nodes(x_new, self.V_active, self.V_inactive)
+                    self.G.V_active.append(x_new)
+                    self.G.E.append(x)
+                    self.G.trajectory.append(ips_t)
+                    self.prune_dominated_nodes(x_new)
+                    self.publish_search(self.G.E)
         return self.G
+
+    def publish_search(self, E):
+        marker = Marker()
+        def add_point(p):
+            pt = Point()
+            pt.x = p[2]
+            pt.y = p[3]
+            pt.z = 0.
+            marker.points.append(pt)
+        marker.header.frame_id = "map"
+        marker.header.stamp = rp.Time.now()
+        marker.id = 0
+        marker.type = Marker.LINE_LIST
+        marker.color.r = 0.
+        marker.color.g = 0.
+        marker.color.b = 1.
+        marker.color.a = 0.5
+        marker.scale.x = 0.1 * 0.5
+        for e in E:
+            for i, a in enumerate(e):
+                if i < len(e) - 1:
+                    add_point(e[i])
+                    add_point(e[i + 1])
+            self.search_pub.publish(marker)
 
 
 if __name__ == '__main__':
     sst = SST()
-    print(sst.cost('c'))
-    # for i in range(10000):
-    #     for j, num in enumerate(sst.normalize_state(sst.sample_state())):
-    #         print(num)
+    try:
+        rp.init_node('search')
+        rp.Rate(50)
+        G = sst.sst_planning()
+        print('end')
+        while not rp.is_shutdown():
+            continue
+    except rp.ROSInterruptException:
+        pass
