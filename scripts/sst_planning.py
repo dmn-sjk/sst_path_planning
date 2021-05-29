@@ -137,6 +137,7 @@ class SST:
         else:
             best = x_near[0]
             for x in x_near:
+                print('best first selection')
                 if self.cost(x) < self.cost(best):
                     best = x
             return best
@@ -158,7 +159,7 @@ class SST:
             self.S.append(s_new)
 
         x_peer = s_new.rep
-
+        print('is node locally the best')
         if x_peer is None or self.cost(x_new) < self.cost(x_peer):
             return True
         return False
