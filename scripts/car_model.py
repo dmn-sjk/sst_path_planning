@@ -20,10 +20,10 @@ class CarModel:
         self.max_x = 100
         self.max_y = 100
 
-        # rospy.Subscriber('/steering', Steering, self.call_steering, queue_size=1)
+        rospy.Subscriber('/steering', Steering, self.call_steering, queue_size=1)
 
         # teleop keyboard
-        rospy.Subscriber('/cmd_vel', Twist, self.call_steering, queue_size=1)
+        # rospy.Subscriber('/cmd_vel', Twist, self.call_steering, queue_size=1)
 
         self.state_pub = rospy.Publisher('/state', State, queue_size=1)
         self.front_wheels_pub = rospy.Publisher('/front_wheels', PoseStamped, queue_size=1)
