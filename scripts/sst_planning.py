@@ -7,6 +7,7 @@ from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
 import rospy as rp
 import kdtree
+from copy import copy
 
 
 class S:
@@ -25,7 +26,7 @@ class G:
 
 
 class SST:
-    def __init__(self, N=1000, delta_bn=0.1, delta_s=0.1, T_prop=0.1):
+    def __init__(self, N=1000, delta_bn=0.01, delta_s=0.1, T_prop=0.5):
         self.car = CarModel()
         # dobrać
         self.detla_bn = delta_bn
@@ -47,9 +48,12 @@ class SST:
     def euclidan_dist_norm(self, a, b):
         a_norm = self.normalize_state(a)
         b_norm = self.normalize_state(b)
+        # a_norm = a
+        # b_norm = b
         sum = 0
         for i in range(len(a)):
             sum += pow(a_norm[i] - b_norm[i], 2)
+
         return np.sqrt(sum)
 
     def monte_carlo_prop(self, x_prop):
@@ -112,21 +116,26 @@ class SST:
     def cost(self, x):
         cost = 0
         parent = x
-        print('cost')
+        k = 0
         if len(self.G.E) == 0:
             return 0
         else:
             while not np.array_equal(parent, self.G.E[0][0]):
                 for i, e in enumerate(self.G.E):
-                    print(i)
-                    print(e[-1])
-                    print(parent)
-                    print(np.abs(e[-1] - parent) <= 0.1)
-                    print('\n\n')
+                    k += 1
+                    if k > 200:
+                        # exit()
+                        pass
+                    print(f'i: {i}')
+                    print(f'cost: {cost}')
+                    #print('\n\n')
                     # if np.array_equal(e[-1], parent):
-                    if (np.abs(e[-1] - parent) <= 0.1).all():
+                    if (np.abs(e[-1] - parent) <= 1e-6).all():
                         parent = e[0]
                         cost += 1
+                        k = 0
+                        if np.array_equal(parent, self.G.E[0][0]):
+                            break
         return cost
 
     def best_first_selection(self):
@@ -137,7 +146,6 @@ class SST:
         else:
             best = x_near[0]
             for x in x_near:
-                print('best first selection')
                 if self.cost(x) < self.cost(best):
                     best = x
             return best
@@ -146,8 +154,11 @@ class SST:
     def collision_free(self, traj, x_new, ips_t):
         return True
 
-    def is_node_locally_the_best(self, x_new):
-        s_new, ind = self.nearest(x_new, self.S)
+    def is_node_locally_the_best(self, x_new, x_selected):
+        s, ind = self.nearest(x_new, self.S)
+        s_new = S()
+        s_new.state = np.copy(s.state)
+        s_new.rep = copy(s.rep)
         # for s in self.S:
         #     comp = s.state == s_new.state
         #     if comp.all():
@@ -159,30 +170,37 @@ class SST:
             self.S.append(s_new)
 
         x_peer = s_new.rep
-        print('is node locally the best')
-        if x_peer is None or self.cost(x_new) < self.cost(x_peer):
+
+        if x_peer is None or self.cost(x_selected) + 1 < self.cost(x_peer):
             return True
         return False
 
     def prune_dominated_nodes(self, x_new):
-        s_new, ind = self.nearest(x_new, self.S)
+        s, ind = self.nearest(x_new, self.S)
+        s_new = S()
+        s_new.state = np.copy(s.state)
+        s_new.rep = copy(s.rep)
         # for s in self.S:
         #     comp = s.state == s_new.state
         #     if comp.all():
         x_peer = s_new.rep
         # print(x_peer)
         if x_peer is not None:
+            print('should delete')
             for i, act in enumerate(self.G.V_active):
                 if np.array_equal(x_peer, act):
                     self.G.V_active.pop(i)
-                    print('pruned')
+                    print('deleted from active')
             self.G.V_inactive.append(x_peer)
+
         self.S[ind].rep = x_new
 
         while x_peer is not None and self.is_leaf(x_peer) and x_peer in self.G.V_inactive:
             x_parent = self.parent(x_peer)
+            print('should prune')
             for i, e in enumerate(self.G.E):
-                if e[0] == x_parent and e[-1] == x_peer:
+                if np.array_equal(e[0], x_parent) and np.array_equal(e[-1], x_peer):
+                    print('pruned\n')
                     self.G.E.pop(i)
                     self.G.trajectory.pop(i)
             self.G.V_inactive.remove(x_peer)
@@ -199,7 +217,7 @@ class SST:
 
     def parent(self, x_peer):
         for e in self.G.E:
-            if e[-1] == x_peer:
+            if np.array_equal(e[-1], x_peer):
                 return e[0]
 
     def sst_planning(self):
@@ -209,12 +227,13 @@ class SST:
             x, ips_t = self.monte_carlo_prop(x_selected)
             x_new = x[-1]
             if self.collision_free(x_selected, x_new, ips_t):
-                if self.is_node_locally_the_best(x_new):
+                if self.is_node_locally_the_best(x_new, x_selected):
                     self.G.V_active.append(x_new)
                     self.G.E.append(x)
                     self.G.trajectory.append(ips_t)
                     self.prune_dominated_nodes(x_new)
                     self.publish_search(self.G.E)
+                    print(f'Edges: {len(self.G.E)}')
         return self.G
 
     def publish_search(self, E):
