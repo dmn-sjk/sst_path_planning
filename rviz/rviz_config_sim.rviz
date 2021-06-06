@@ -58,7 +58,15 @@ Visualization Manager:
       Marker Topic: /search
       Name: Marker
       Namespaces:
-        {}
+        "": true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /nodes
+      Name: MarkerArray
+      Namespaces:
+        "": true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -89,7 +97,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.135248184204102
+      Distance: 49.55005645751953
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -97,17 +105,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: 0.4059862196445465
+        Y: -2.3956398963928223
+        Z: -0.34348589181900024
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.785398006439209
+      Pitch: 0.8103979825973511
       Target Frame: <Fixed Frame>
-      Yaw: 0.785398006439209
+      Yaw: 6.228582859039307
     Saved: ~
 Window Geometry:
   Displays:
@@ -126,4 +134,4 @@ Window Geometry:
     collapsed: false
   Width: 1267
   X: 334
-  Y: 121
+  Y: 84

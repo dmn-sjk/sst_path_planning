@@ -2,10 +2,9 @@
 
 import tf.transformations
 from sst.msg import Steering, State
-import rospy
+import rospy as rp
 from geometry_msgs.msg import Twist, PoseStamped, Point
 import numpy as np
-import math
 from tf import TransformBroadcaster
 from sst_planning import SST
 from visualization_msgs.msg import Marker, MarkerArray
@@ -16,16 +15,31 @@ class Simulation:
     def __init__(self):
         self.sst = SST()
         self.car = CarModel()
+        destination_pub = rp.Publisher('/destination', Marker, queue_size=100)
+        destination = Marker()
+        destination.header.frame_id = 'map'
+        destination.type = Marker.CUBE
+        destination.id = 0
+        destination.pose.position.x = 5
+        destination.pose.position.y = 5
+        destination.pose.position.z = 0
+        destination.color.a = 1.0
+        destination.color.r = 0.0
+        destination.color.g = 0.0
+        destination.color.b = 1.0
+        destination_pub.publish()
 
     def steer(self, ):
-
+        pass
 
 if __name__ == '__main__':
     try:
-        rospy.init_node('simulation')
-        rospy.Rate(50)
+        rp.init_node('simulation')
+        rp.Rate(50)
         sim = Simulation()
         G = sim.sst.sst_planning()
+        while not rp.is_shutdown():
+            continue
 
         # path = []
         # curr = G.E[-1][-1]
@@ -48,5 +62,5 @@ if __name__ == '__main__':
         #         prev_time = time
 
 
-    except rospy.ROSInterruptException:
+    except rp.ROSInterruptException:
         pass
