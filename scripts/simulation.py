@@ -59,7 +59,6 @@ if __name__ == '__main__':
             sim.publish_route(route, all_points=True)
             time = rp.Time.now().to_sec()
             delta_t = time - prev_time
-            print(delta_t, controls[i][1])
 
             if delta_t >= controls[i][1]:
                 sim.publish_control(controls[i][0])
