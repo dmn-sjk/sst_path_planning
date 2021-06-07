@@ -20,13 +20,13 @@ class CarModel:
         self.max_x = 20
         self.max_y = 20
 
-        rospy.Subscriber('/steering', Steering, self.call_steering, queue_size=1)
+        rospy.Subscriber('/steering', Steering, self.call_steering, queue_size=10)
 
         # teleop keyboard
         # rospy.Subscriber('/cmd_vel', Twist, self.call_steering, queue_size=1)
 
-        self.state_pub = rospy.Publisher('/state', State, queue_size=1)
-        self.front_wheels_pub = rospy.Publisher('/front_wheels', PoseStamped, queue_size=1)
+        self.state_pub = rospy.Publisher('/state', State, queue_size=10)
+        self.front_wheels_pub = rospy.Publisher('/front_wheels', PoseStamped, queue_size=10)
         self.tf_br = TransformBroadcaster()
 
         self.steer_vector = np.zeros((2, 1))
@@ -87,7 +87,7 @@ class CarModel:
         elif self.state[0] < -self.max_steering_angle:
             self.state[0] = -self.max_steering_angle
 
-        rospy.loginfo("State: %f, %f, %f, %f", *self.state)
+        # rospy.loginfo("State: %f, %f, %f, %f", *self.state)
 
     def get_new_state(self, state, steer_vector, delta_t):
         state_dot = np.array([[1, 0],
