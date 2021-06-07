@@ -17,7 +17,7 @@ source devel/setup.bash
 chmod +x ~/catkin_ws/src/sst/scripts/*.py
 ```
 
-## Run:
+## Run car simulation:
 ```bash
 roslaunch sst car_simulation.launch
 ```
@@ -27,4 +27,9 @@ roslaunch sst car_simulation.launch
 sudo apt-get install ros-noetic-teleop-twist-keyboard
 
 rosrun teleop_twist_keyboard teleop_twist_keyboard.py
+```
+
+## Plan and execute path on map:
+```bash
+roslaunch sst simulation.launch
 ```
