@@ -1,0 +1,7 @@
+<launch>
+<include file="$(find sst)/launch/map.launch" />
+<node name="car_model" pkg="sst" type="car_model.py" output="screen" />
+<node name="points" pkg="sst" type="destination.py" output="screen" />
+<node name="simulation" pkg="sst" type="simulation.py" output="screen" />
+<node name="rviz" pkg="rviz" type="rviz" args="-d $(find sst)/rviz/rviz_config_sim.rviz"/>
+</launch>

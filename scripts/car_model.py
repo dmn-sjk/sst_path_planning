@@ -17,28 +17,28 @@ class CarModel:
         self.max_lin_vel = 5.0
         self.max_ang_vel_wheel = 5.0
         self.max_theta = 2 * math.pi
-        self.max_x = 100
-        self.max_y = 100
+        self.max_x = 20
+        self.max_y = 20
 
-        rospy.Subscriber('/steering', Steering, self.call_steering, queue_size=1)
+        rospy.Subscriber('/steering', Steering, self.call_steering, queue_size=10)
 
         # teleop keyboard
         # rospy.Subscriber('/cmd_vel', Twist, self.call_steering, queue_size=1)
 
-        self.state_pub = rospy.Publisher('/state', State, queue_size=1)
-        self.front_wheels_pub = rospy.Publisher('/front_wheels', PoseStamped, queue_size=1)
+        self.state_pub = rospy.Publisher('/state', State, queue_size=10)
+        self.front_wheels_pub = rospy.Publisher('/front_wheels', PoseStamped, queue_size=10)
         self.tf_br = TransformBroadcaster()
 
         self.steer_vector = np.zeros((2, 1))
         self.state = np.zeros((4, 1))
 
     def call_steering(self, data):
-        # self.steer_vector[0] = data.steer_ang_vel
-        # self.steer_vector[1] = data.car_lin_vel
+        self.steer_vector[0] = data.steer_ang_vel
+        self.steer_vector[1] = data.car_lin_vel
 
         # teleop keyboard
-        self.steer_vector[0] = data.angular.z
-        self.steer_vector[1] = data.linear.x
+        # self.steer_vector[0] = data.angular.z
+        # self.steer_vector[1] = data.linear.x
 
     def publish_state(self):
         msg_state = State()
@@ -87,7 +87,7 @@ class CarModel:
         elif self.state[0] < -self.max_steering_angle:
             self.state[0] = -self.max_steering_angle
 
-        rospy.loginfo("State: %f, %f, %f, %f", *self.state)
+        # rospy.loginfo("State: %f, %f, %f, %f", *self.state)
 
     def get_new_state(self, state, steer_vector, delta_t):
         state_dot = np.array([[1, 0],
@@ -96,7 +96,6 @@ class CarModel:
                               [0, math.sin(state[1])]]).dot(steer_vector)
 
         new_state = state + state_dot * delta_t
-
         if new_state[0] > self.max_steering_angle:
             new_state[0] = self.max_steering_angle
         elif new_state[0] < -self.max_steering_angle:
