@@ -4,7 +4,7 @@ import rospy as rp
 from visualization_msgs.msg import Marker
 
 class Point:
-    def __init__(self, x, y, color):
+    def __init__(self, x, y, qx, qy, qz, qw, color):
         self.pub = rp.Publisher('/destination', Marker, queue_size=10)
         self.marker = Marker()
 
@@ -18,10 +18,10 @@ class Point:
         self.marker.pose.position.y = y
         self.marker.pose.position.z = 0.05
 
-        self.marker.pose.orientation.x = 0
-        self.marker.pose.orientation.y = 0
-        self.marker.pose.orientation.z = 0
-        self.marker.pose.orientation.w = 1.0
+        self.marker.pose.orientation.x = qx
+        self.marker.pose.orientation.y = qy
+        self.marker.pose.orientation.z = qz
+        self.marker.pose.orientation.w = qw
         self.marker.scale.x = 0.5
         self.marker.scale.y = 0.5
         self.marker.scale.z = 0.01
@@ -36,8 +36,14 @@ class Point:
 
 
 if __name__ == '__main__':
-    rp.init_node('points', log_level=rp.DEBUG)
-    destination = Point(10, 6, (1.0, 0.0, 1.0))
+    rp.init_node('destination', log_level=rp.DEBUG)
+    x = rp.get_param('~x')
+    y = rp.get_param('~y')
+    qx = rp.get_param('~qx')
+    qy = rp.get_param('~qy')
+    qz = rp.get_param('~qz')
+    qw = rp.get_param('~qw')
+    destination = Point(x, y, qx, qy, qz, qw, (1.0, 0.0, 1.0))
     while not rp.is_shutdown():
         destination.publish()
         rp.sleep(0.5)

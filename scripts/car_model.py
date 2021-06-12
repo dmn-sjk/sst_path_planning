@@ -11,14 +11,14 @@ from copy import copy
 
 
 class CarModel:
-    def __init__(self):
-        self.L = 2.2
-        self.max_steering_angle = math.pi / 3
-        self.max_lin_vel = 5.0
-        self.max_ang_vel_wheel = 5.0
+    def __init__(self, max_x_coord=20, max_y_coord=20, L=2.2, max_steering_angle=math.pi / 3, max_lin_vel=5.0, max_ang_vel_wheel=5.0):
+        self.L = L
+        self.max_steering_angle = max_steering_angle
+        self.max_lin_vel = max_lin_vel
+        self.max_ang_vel_wheel = max_ang_vel_wheel
         self.max_theta = 2 * math.pi
-        self.max_x = 20
-        self.max_y = 20
+        self.max_x = max_x_coord
+        self.max_y = max_y_coord
 
         rospy.Subscriber('/steering', Steering, self.call_steering, queue_size=10)
 
