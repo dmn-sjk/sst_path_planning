@@ -1,7 +1,27 @@
 <launch>
 <include file="$(find sst)/launch/map.launch" />
 <node name="car_model" pkg="sst" type="car_model.py" output="screen" />
-<node name="points" pkg="sst" type="destination.py" output="screen" />
-<node name="simulation" pkg="sst" type="simulation.py" output="screen" />
+<node name="destination" pkg="sst" type="destination.py" output="screen" >
+    <param name="x" value="10" />
+    <param name="y" value="6" />
+    <param name="qx" value="0.0" />
+    <param name="qy" value="0.0" />
+    <param name="qz" value="0.0" />
+    <param name="qw" value="1.0" />
+</node>
+<node name="simulation" pkg="sst" type="simulation.py" output="screen" >
+    <param name="iterations" value="1000" />
+    <param name="delta_bn" value="15" />
+    <param name="delta_s" value="0.5" />
+    <param name="T_prop" value="0.5" />
+
+    <!-- car model -->
+    <param name="mid_fronwheel_dist" value="2.2" />
+    <param name="max_steering_angle" value="1.047197551" />
+    <param name="max_lin_vel" value="5.0" />
+    <param name="max_ang_vel_wheel" value="5.0" />
+    <param name="max_x_coord" value="20" />
+    <param name="max_y_coord" value="20" />
+</node>
 <node name="rviz" pkg="rviz" type="rviz" args="-d $(find sst)/rviz/rviz_config_sim.rviz"/>
 </launch>

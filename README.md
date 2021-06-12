@@ -30,6 +30,7 @@ rosrun teleop_twist_keyboard teleop_twist_keyboard.py
 ```
 
 ## Plan and execute path on map:
+Configuration in simulation.launch file
 ```bash
 roslaunch sst simulation.launch
 ```
