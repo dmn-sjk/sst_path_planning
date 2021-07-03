@@ -10,7 +10,7 @@
     <param name="qw" value="1.0" />
 </node>
 <node name="simulation" pkg="sst" type="simulation.py" output="screen" >
-    <param name="iterations" value="1000" />
+    <param name="iterations" value="1500" />
     <param name="delta_bn" value="15" />
     <param name="delta_s" value="0.5" />
     <param name="T_prop" value="0.5" />
