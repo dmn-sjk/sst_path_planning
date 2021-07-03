@@ -5,7 +5,7 @@ Li, Y., Littlefield, Z., & Bekris, K. E. (2016). Asymptotically optimal sampling
 
 Car's kinematic model is used.
 
-![graph_per](https://user-images.githubusercontent.com/71564608/123539179-ad443180-d738-11eb-91eb-05ca4403956f.png)
+![visualization](https://user-images.githubusercontent.com/71564608/124363491-ce76b780-dc3b-11eb-9edf-bea447a9db9e.png)
 
 ## Build:
 ```bash
